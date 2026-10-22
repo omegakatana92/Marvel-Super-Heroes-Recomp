@@ -45,4 +45,30 @@ constexpr uint16_t kClockFull = 0x9900; // (BCD: ninety-nine)
 constexpr uint32_t kGaugeMeter = 0x195, kGaugeLevel = 0x198;
 constexpr uint8_t kGaugeFull = 0x90, kGaugeLevelsFull = 3;
 
+// Where a player stands: the two words the sprite builder at 01D9C reads and draws the character from.
+// x is +0x0C and y is +0x10 (ground level 0x03D8); walking moved x 316 to 540, a jump took y 984 to 876.
+// Found with a temporary hook on the builder, then checked by holding x at 0x0100 and 0x0600 with --poke
+// (the character crossed to the other side of the opponent, then to the far right) (PROGRESS.md).
+constexpr uint32_t kX = 0x0C, kY = 0x10;
+constexpr uint16_t kGroundY = 0x03D8;
+
+// What a player is doing, the word at +0x3E: 0 outside a round, then the action. A movie that stood,
+// walked, crouched, jumped and punched on known frames read these; 4 is what a player being hit reads
+// (the picture shows it reeling), and 7-8 are the changes between an air move and the landing.
+constexpr uint32_t kAction = 0x3E;
+enum : uint16_t {
+    kActionNone = 0,
+    kActionWalk = 1,
+    kActionCrouch = 2,
+    kActionStand = 3,
+    kActionReel = 4,
+    kActionAir = 5,
+    kActionAttack = 6,
+};
+
+// Which way a player faces, a byte (again at +0xA3): 1 faces right, 0 left. The game's own sprite builder
+// reads 0x4D(a0) at 01A4AA to choose the mirror (PROGRESS.md).
+constexpr uint32_t kFacesRight = 0x4D;
+
+
 } // namespace msh
