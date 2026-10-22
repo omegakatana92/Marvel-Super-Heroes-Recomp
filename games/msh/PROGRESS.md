@@ -80,6 +80,12 @@ player is beaten. The same byte in the second record follows player 2.
 The bytes at `FF400C`/`FF440C` (`+0x0C`, a 32-bit value the intro fills) and at `FF8D9C`/`FF8E7C` are
 not the health: a `--poke` of them leaves the bars untouched, so the sources do not use them.
 
+**The Infinity Gauge** is two bytes in the same record: the meter at `+0x195` (`FF4195`, `FF4595`) and
+the number of full gauges it has earned at `+0x198` (`FF4198`, `FF4598`, 0 to 3). The MAME cheat
+collection names both as "Max Power" (`0x90` and 3); holding them there on the board turned the bar under
+the health from the dark green stripes to solid cyan and full. Filling the meter alone made the game raise
+the count to 3 by itself, and holding the count at 3 alone filled the bar too, so the two agree.
+
 ## The memory so far
 
 | Address | Size | What | How it was found |
@@ -88,6 +94,8 @@ not the health: a `--poke` of them leaves the bars untouched, so the sources do 
 | `FF4808` | word (high byte BCD) | **The round's clock**: the high byte counts down (`0x99` is "99"), 0 outside a round | `--dump-ram` a second apart read `0x97` then `0x96`; holding it at `0x99xx` stopped the digits. |
 | `FF4000` (+`FF4400`) | record | **Player 1 (player 2)'s record**, the two 0x400 apart | Found with the health byte below. |
 | `+0x191` (`FF4191`/`FF4591`) | byte | **Player 1 (player 2) health**, `0x90` at a round's start; the bars are drawn one pixel per point; 0 outside a round, `0xFF` once beaten | Dumps over a match: the byte fell exactly as the bar shortened (90, 71, 52 pixels for `0x5A`, `0x47`, `0x34`). |
+| `+0x195` (`FF4195`/`FF4595`) | byte | **The Infinity Gauge's meter**, `0x90` full | The cheat collection's "Max Power" pair; holding it at `0x90` turned the bar cyan and full. |
+| `+0x198` (`FF4198`/`FF4598`) | byte | **The number of full Infinity Gauges**, 0..3 | The other half of "Max Power"; holding it at 3 filled the bar the same way. |
 
 ## Features built on it (`src/`)
 
@@ -98,6 +106,7 @@ not the health: a `--poke` of them leaves the bars untouched, so the sources do 
 | `no_damage_2` | Cheats | The same for player 2 (the opponent's, in a one-player game). |
 | `infinite_time` | Cheats | Holds the round's clock where it stood when the round began. |
 | `one_hit` | Cheats | Leaves the opponent (player 2) a single point of health, so any hit ends the round. |
+| `full_gauge` | Cheats | Holds both players' Infinity Gauges full, so a gem's power is always ready. |
 
 Each was checked with no window against a run of the board, with `--dump-ram` of the bytes and
 `--shot-every` pictures:
@@ -109,15 +118,15 @@ Each was checked with no window against a run of the board, with `--dump-ram` of
 - `one_hit`: player 2's health byte is held at 1 all round.
 - `infinite_time`: the clock word reads `0x9928` at frames 3000 and 3600 where the board's has counted
   down.
+- `full_gauge`: both records read `0x90` and 3 at the meter and the count, and the bars under both health
+  bars are solid cyan where the board's are dark green stripes.
 
 `make check` still passes: with every feature off the game runs exactly as the board does.
 
 ## Next
 
-- **The Infinity Gauge.** The values at `FF41D6`/`FF45D6` rise with the fight, but a `--poke` of them
-  leaves the gauge on the picture unchanged, so the source the bar is drawn from is still to be found
-  (the same for the player's place across the stage and the state word the training aids want).
 - The rest of the player records: the place across the stage, the facing and the state that says what a
-  player is doing, then the attack boxes.
+  player is doing (the training aids' frame data wants it), then the attack boxes. `FF406A`'s `0x80` bit,
+  which the cheat collection calls "No Ground Attacks", is a first thread for the state.
 - Keep the count of instructions left to the interpreter falling: play the paths the explore runs did
   not reach, then `make` again.

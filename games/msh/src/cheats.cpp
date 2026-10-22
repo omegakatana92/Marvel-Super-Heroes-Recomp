@@ -73,6 +73,14 @@ namespace {
         if (FeatureOn("one_hit")) {
             SetRam8(Player(1) + kHealth, 1);
         }
+        // The Infinity Gauges: both players' bars are held full (the meter and the count of full gauges),
+        // so a gem's power is always ready.
+        if (FeatureOn("full_gauge")) {
+            for (int n = 0; n < 2; n++) {
+                SetRam8(Player(n) + kGaugeMeter, kGaugeFull);
+                SetRam8(Player(n) + kGaugeLevel, kGaugeLevelsFull);
+            }
+        }
     }
 } // namespace
 
@@ -95,6 +103,8 @@ void RegisterCheats() {
     game.features.push_back({"infinite_time", "Cheats", "Infinite time", "The round's clock stands still."});
     game.features.push_back(
         {"one_hit", "Cheats", "One-hit knockouts", "Player 2 (the opponent, in a one-player game) goes down with the first hit."});
+    game.features.push_back({"full_gauge", "Cheats", "Full Infinity Gauges",
+                             "Both players' Infinity Gauges are held full, so a gem's power is always ready."});
 }
 
 } // namespace cps2recomp

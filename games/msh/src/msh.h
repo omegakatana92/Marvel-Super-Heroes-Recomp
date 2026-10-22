@@ -38,4 +38,11 @@ inline constexpr uint32_t Player(int n) {
 constexpr uint32_t kClock = 0xFF4808;
 constexpr uint16_t kClockFull = 0x9900; // (BCD: ninety-nine)
 
+// The Infinity Gauge, two bytes in a player's record: the meter that fills as the fight goes on (+0x195)
+// and the number of full gauges it has earned (+0x198, 0..3). Holding the meter at 0x90 turns the bar
+// under the health cyan and full, and the game itself raises the count to 3; holding the count at 3 does
+// the same, so the pair is what the cheat collection calls "Max Power" (PROGRESS.md).
+constexpr uint32_t kGaugeMeter = 0x195, kGaugeLevel = 0x198;
+constexpr uint8_t kGaugeFull = 0x90, kGaugeLevelsFull = 3;
+
 } // namespace msh

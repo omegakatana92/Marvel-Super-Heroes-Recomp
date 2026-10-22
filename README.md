@@ -33,6 +33,7 @@ was found, is in [games/msh/PROGRESS.md](games/msh/PROGRESS.md), and the code th
 - **No damage** and **No damage, player 2** — a player's health stops falling.
 - **Infinite time** — the round's clock stands still.
 - **One-hit knockouts** — the opponent goes down with the first hit.
+- **Full Infinity Gauges** — both gauges stay full, so a gem's power is always ready.
 
 The training aids (input display, frame data, the dummy, hit boxes) are still to come; see
 [ROADMAP.md](ROADMAP.md) for what is next.
