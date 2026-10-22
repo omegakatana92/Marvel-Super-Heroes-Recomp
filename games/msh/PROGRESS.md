@@ -78,13 +78,28 @@ bar was drawn exactly one pixel per point — the bar measured 90 pixels wide wh
 player is beaten. The same byte in the second record follows player 2.
 
 The bytes at `FF400C`/`FF440C` (`+0x0C`, a 32-bit value the intro fills) and at `FF8D9C`/`FF8E7C` are
-not the health: a `--poke` of them leaves the bars untouched, so the sources do not use them.
+not the health (a `--poke` of them leaves the bars untouched), though the sprite builder at `019DB8` reads
+`+0xC` and `+0x10` as the pair it draws a player against the camera with.
 
 **The Infinity Gauge** is two bytes in the same record: the meter at `+0x195` (`FF4195`, `FF4595`) and
 the number of full gauges it has earned at `+0x198` (`FF4198`, `FF4598`, 0 to 3). The MAME cheat
 collection names both as "Max Power" (`0x90` and 3); holding them there on the board turned the bar under
 the health from the dark green stripes to solid cyan and full. Filling the meter alone made the game raise
 the count to 3 by itself, and holding the count at 3 alone filled the bar too, so the two agree.
+
+**What a player is doing** is the word at `+0x3E` (`FF403E`/`FF443E`). A movie that stood, walked, crouched,
+jumped and punched on known frames read 3, 1, 2, 5 and 6 there (and 4 while the opponent landed a hit:
+a picture at such a frame shows the player reeling). 0 is outside a round; 7 and 8 are the changes
+between an air move and the landing.
+
+**Which way a player faces** is the byte at `+0x4D` (`FF404D`/`FF444D`, and again at `+0xA3`): 1 faces
+right, 0 faces left. At frames where the two crossed sides it flipped with them, and the game's own
+sprite builder reads `0x4D(a0)` at `01A4AA` to choose the mirror.
+
+**The place across the stage** is not `+0x10`: that is the camera's place in each record (a routine at
+`01E0C` writes the same value there every frame, and walking leaves it at `0x03D8`), and holding the
+sprite builder's `+0x10` at a far value moves the whole picture. The per-player x the fighting code uses
+is still to be found.
 
 ## The memory so far
 
@@ -96,6 +111,8 @@ the count to 3 by itself, and holding the count at 3 alone filled the bar too, s
 | `+0x191` (`FF4191`/`FF4591`) | byte | **Player 1 (player 2) health**, `0x90` at a round's start; the bars are drawn one pixel per point; 0 outside a round, `0xFF` once beaten | Dumps over a match: the byte fell exactly as the bar shortened (90, 71, 52 pixels for `0x5A`, `0x47`, `0x34`). |
 | `+0x195` (`FF4195`/`FF4595`) | byte | **The Infinity Gauge's meter**, `0x90` full | The cheat collection's "Max Power" pair; holding it at `0x90` turned the bar cyan and full. |
 | `+0x198` (`FF4198`/`FF4598`) | byte | **The number of full Infinity Gauges**, 0..3 | The other half of "Max Power"; holding it at 3 filled the bar the same way. |
+| `+0x3E` (`FF403E`/`FF443E`) | word | **What a player is doing**: 0 outside a round, 1 walking, 2 crouching, 3 standing, 4 reeling from a hit, 5 jumping/in the air, 6 attacking, 7-8 the air move's changes | A movie acted each known thing on a known frame and read the word; a picture at a 4 shows the player reeling. |
+| `+0x4D` (`FF404D`/`FF444D`, `+0xA3`) | byte | **Which way a player faces**: 1 right, 0 left | It flipped when the players crossed sides, and the sprite builder reads `0x4D(a0)` to mirror the drawing. |
 
 ## Features built on it (`src/`)
 
@@ -125,8 +142,11 @@ Each was checked with no window against a run of the board, with `--dump-ram` of
 
 ## Next
 
-- The rest of the player records: the place across the stage, the facing and the state that says what a
-  player is doing (the training aids' frame data wants it), then the attack boxes. `FF406A`'s `0x80` bit,
-  which the cheat collection calls "No Ground Attacks", is a first thread for the state.
+- **The place across the stage.** `+0x10` is the camera anchor, not the player's own x; the fighting code's
+  per-player position is still to be found (the object list has the screen places, but the record's own
+  world x is what the training aids want).
+- The attack boxes and the frame that says an attack is out, then the training aids themselves: the input
+  display first (it has what it needs now: the panel bits and `+0x4D`'s facing), then the frame data on
+  `+0x3E`.
 - Keep the count of instructions left to the interpreter falling: play the paths the explore runs did
   not reach, then `make` again.
