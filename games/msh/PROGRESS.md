@@ -56,28 +56,68 @@ The tools used, in the order they are reached for (all in `docs/FEATURES.md`):
 - `--watch LOW[-HIGH]` reports every write the 68000 makes to an address range with the instruction that
   made it, read against `work/msh/program.lst`.
 
-## The memory so far
+## Getting to a match
 
-_(None yet: this port has just been translated, with `make explore` driving the game's code out of the
-interpreter and into translated C++. Addresses found from here on are written in this table, and the
-`src/` files name only those.)_
+The board boots to a warning, then the title and an attract show. A movie presses Coin at frame 900 and
+Start at 1000; the character select takes a punch (frame 1200) and its mode select another (frame 1800),
+and the round's intro starts about frame 2600. A round is under way when both health bytes are neither 0
+outside a round nor 0xFF for a beaten player.
+
+**The credits** are a word at `FF4C08`: holding it at 5 with `--poke` changed the title to
+"CREDITS 5". One coin adds one, and pressing Start takes it away again. (`FF27F0` and `FFF974` count the
+coins put in and are not spent by Start: they are the operator's audit, not the credits.)
+
+**The clock** is a word at `FF4808` whose high byte counts down in BCD (`0x97` is "97"): a dump at frame
+2800 read `0x97` and one 60 frames later read `0x96`. Holding the word at `0x99xx` with `--poke` stood
+the digits still.
+
+**The player records** are two 0x400-byte records at `FF4000` and `FF4400`. The health is the byte at
+`+0x191` (`FF4191`, `FF4591`): dumps taken as a round was fought read `0x90` at its start, and the health
+bar was drawn exactly one pixel per point — the bar measured 90 pixels wide when the byte read `0x5A`,
+71 at `0x47`, and 52 at `0x34`. It reads 0 outside a round and in the attract show, and `0xFF` once a
+player is beaten. The same byte in the second record follows player 2.
+
+The bytes at `FF400C`/`FF440C` (`+0x0C`, a 32-bit value the intro fills) and at `FF8D9C`/`FF8E7C` are
+not the health: a `--poke` of them leaves the bars untouched, so the sources do not use them.
+
+## The memory so far
 
 | Address | Size | What | How it was found |
 | --- | --- | --- | --- |
-| _(none yet)_ | | | |
+| `FF4C08` | word | **Credits**: the title reads it as "CREDITS n" | Holding it at 5 with `--poke` turned the title to "CREDITS 5"; one coin adds one and Start spends it. |
+| `FF4808` | word (high byte BCD) | **The round's clock**: the high byte counts down (`0x99` is "99"), 0 outside a round | `--dump-ram` a second apart read `0x97` then `0x96`; holding it at `0x99xx` stopped the digits. |
+| `FF4000` (+`FF4400`) | record | **Player 1 (player 2)'s record**, the two 0x400 apart | Found with the health byte below. |
+| `+0x191` (`FF4191`/`FF4591`) | byte | **Player 1 (player 2) health**, `0x90` at a round's start; the bars are drawn one pixel per point; 0 outside a round, `0xFF` once beaten | Dumps over a match: the byte fell exactly as the bar shortened (90, 71, 52 pixels for `0x5A`, `0x47`, `0x34`). |
 
 ## Features built on it (`src/`)
 
-_(None yet. Any game-side fix — a hook for a piece of the program the port has to do differently from
-the board — is added in `games/msh/src/` and written up here.)_
+| Feature | Category | What it does |
+| --- | --- | --- |
+| `free_play` | Game (Enhanced) | Holds two credits, so Start works without a coin. |
+| `no_damage` | Cheats | Puts player 1's health back to the round's full value every frame. |
+| `no_damage_2` | Cheats | The same for player 2 (the opponent's, in a one-player game). |
+| `infinite_time` | Cheats | Holds the round's clock where it stood when the round began. |
+| `one_hit` | Cheats | Leaves the opponent (player 2) a single point of health, so any hit ends the round. |
 
-The toolkit's own features work without any of this: the launcher, the in-game menu, save states,
-run-ahead, the Display settings and full control remapping.
+Each was checked with no window against a run of the board, with `--dump-ram` of the bytes and
+`--shot-every` pictures:
+
+- `free_play`: a movie with **no** coin press reaches character select and a match (the title reads
+  "PRESS START"), where without the feature it stays on the attract show.
+- `no_damage`: over the movie above the health byte stays `0x90` all round, where the same movie without
+  it drains it to `0x47`.
+- `one_hit`: player 2's health byte is held at 1 all round.
+- `infinite_time`: the clock word reads `0x9928` at frames 3000 and 3600 where the board's has counted
+  down.
+
+`make check` still passes: with every feature off the game runs exactly as the board does.
 
 ## Next
 
-- Find the player records (health, the Infinity Gauge, the round's clock) and the state that says what a
-  player is doing, as the sibling ports do, and build the features the toolkit's `fight/` parts want on
-  top of them.
+- **The Infinity Gauge.** The values at `FF41D6`/`FF45D6` rise with the fight, but a `--poke` of them
+  leaves the gauge on the picture unchanged, so the source the bar is drawn from is still to be found
+  (the same for the player's place across the stage and the state word the training aids want).
+- The rest of the player records: the place across the stage, the facing and the state that says what a
+  player is doing, then the attack boxes.
 - Keep the count of instructions left to the interpreter falling: play the paths the explore runs did
   not reach, then `make` again.

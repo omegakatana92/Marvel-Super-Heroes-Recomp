@@ -1,5 +1,12 @@
 # Marvel Super Heroes Recomp — changelog
 
+## Unreleased
+
+The first game-side features, built from addresses found on the running board (see
+[games/msh/PROGRESS.md](games/msh/PROGRESS.md)): **Free play**, **No damage** (each player),
+**Infinite time** and **One-hit knockouts**. With every feature off the game runs exactly as the board
+does.
+
 ## 0.1.0-beta.1
 
 First build. The 68000 and Z80 programs of *Marvel Super Heroes* (Euro 951024) are translated to C++

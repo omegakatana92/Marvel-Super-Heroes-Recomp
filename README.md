@@ -25,9 +25,17 @@ work):
 - **Run-ahead** and the **Display** options (scaling, picture shape, window size, full screen).
 - Every key and button **remappable**, for each player.
 
-The game's own features are still being found; the addresses go in
-[games/msh/PROGRESS.md](games/msh/PROGRESS.md) as they are confirmed on the running board, and the
-code that uses them goes in `games/msh/src/`. See [ROADMAP.md](ROADMAP.md) for what is next.
+The game's own features are built from addresses confirmed on the running board; each one, and how it
+was found, is in [games/msh/PROGRESS.md](games/msh/PROGRESS.md), and the code that uses it is in
+`games/msh/src/`:
+
+- **Free play** — Start works without a coin.
+- **No damage** and **No damage, player 2** — a player's health stops falling.
+- **Infinite time** — the round's clock stands still.
+- **One-hit knockouts** — the opponent goes down with the first hit.
+
+The training aids (input display, frame data, the dummy, hit boxes) are still to come; see
+[ROADMAP.md](ROADMAP.md) for what is next.
 
 `--list-features` prints the whole list. Ready-made builds for Windows, Linux and the Steam Deck go on
 the [Releases](../../releases) page.
